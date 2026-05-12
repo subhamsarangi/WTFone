@@ -3,9 +3,304 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WTFONE</title>
+    <title>WTFONE Video Chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        .join-section {
+            background: #2a2a2a;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            width: 100%;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background: #1a1a1a;
+            color: #fff;
+            font-size: 1em;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #0066cc;
+            box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #0066cc;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        button:hover {
+            background: #0052a3;
+        }
+        
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .status.info {
+            background: #003d99;
+            color: #66b3ff;
+            display: block;
+        }
+        
+        .status.error {
+            background: #660000;
+            color: #ff6666;
+            display: block;
+        }
+        
+        .status.success {
+            background: #006600;
+            color: #66ff66;
+            display: block;
+        }
+        
+        .console {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 15px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        
+        .console-line {
+            margin-bottom: 5px;
+            color: #0f0;
+        }
+        
+        .console-line.error {
+            color: #f00;
+        }
+        
+        .console-line.info {
+            color: #0ff;
+        }
+    </style>
 </head>
 <body>
-    <h1>WTFONE Video Chat - Coming Soon</h1>
+    <div class="container">
+        <h1>WTFONE Video Chat</h1>
+        
+        <div class="join-section">
+            <div id="status" class="status"></div>
+            
+            <div class="form-group">
+                <label for="roomId">Room ID</label>
+                <input type="text" id="roomId" placeholder="Leave empty to create new room">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Enter password">
+            </div>
+            
+            <button id="joinBtn" onclick="handleJoin()">Join Room</button>
+            <button id="createBtn" onclick="handleCreate()" style="margin-top: 10px;">Create New Room</button>
+        </div>
+        
+        <div>
+            <h3 style="margin-bottom: 10px;">Console</h3>
+            <div class="console" id="console"></div>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let peerId = null;
+        let roomId = null;
+        
+        function log(message, type = 'info') {
+            const console = document.getElementById('console');
+            const line = document.createElement('div');
+            line.className = `console-line ${type}`;
+            line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            console.appendChild(line);
+            console.scrollTop = console.scrollHeight;
+        }
+        
+        function showStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+        }
+        
+        async function handleCreate() {
+            const password = document.getElementById('password').value;
+            
+            if (!password) {
+                showStatus('Password required', 'error');
+                return;
+            }
+            
+            try {
+                showStatus('Creating room...', 'info');
+                const response = await fetch('/api/rooms', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to create room');
+                }
+                
+                const data = await response.json();
+                document.getElementById('roomId').value = data.room_id;
+                showStatus(`Room created: ${data.room_id}`, 'success');
+                log(`Room created: ${data.room_id}`);
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+                log(`Error creating room: ${error.message}`, 'error');
+            }
+        }
+        
+        async function handleJoin() {
+            const roomId = document.getElementById('roomId').value;
+            const password = document.getElementById('password').value;
+            
+            if (!roomId || !password) {
+                showStatus('Room ID and password required', 'error');
+                return;
+            }
+            
+            try {
+                showStatus('Connecting...', 'info');
+                log(`Joining room ${roomId}...`);
+                
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}/api/rooms/${roomId}/ws`;
+                
+                ws = new WebSocket(wsUrl);
+                
+                ws.onopen = () => {
+                    log('WebSocket connected');
+                    // Send join message
+                    const joinMsg = {
+                        type: 'join',
+                        room_id: roomId,
+                        password: password
+                    };
+                    ws.send(JSON.stringify(joinMsg));
+                    log('Join message sent');
+                };
+                
+                ws.onmessage = (event) => {
+                    try {
+                        const msg = JSON.parse(event.data);
+                        log(`Received: ${JSON.stringify(msg)}`);
+                        
+                        if (msg.type === 'joined') {
+                            peerId = msg.peer_id;
+                            showStatus(`Joined as peer ${peerId}`, 'success');
+                            log(`Joined as peer ${peerId}`);
+                        } else if (msg.type === 'peer_joined') {
+                            log(`Peer joined: ${msg.peer_id}`);
+                        } else if (msg.type === 'peer_left') {
+                            log(`Peer left: ${msg.peer_id}`);
+                        } else if (msg.type === 'error') {
+                            showStatus(`Error: ${msg.message}`, 'error');
+                            log(`Server error: ${msg.message}`, 'error');
+                        }
+                    } catch (error) {
+                        log(`Failed to parse message: ${error.message}`, 'error');
+                    }
+                };
+                
+                ws.onerror = (error) => {
+                    showStatus('WebSocket error', 'error');
+                    log(`WebSocket error: ${error}`, 'error');
+                };
+                
+                ws.onclose = () => {
+                    showStatus('Disconnected', 'error');
+                    log('WebSocket closed');
+                    ws = null;
+                    peerId = null;
+                };
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+                log(`Error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Allow Enter key to join
+        document.getElementById('password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleJoin();
+            }
+        });
+        
+        log('WTFONE ready');
+    </script>
 </body>
 </html>

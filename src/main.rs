@@ -14,6 +14,7 @@ use tower_http::trace::TraceLayer;
 use tracing_subscriber;
 
 mod rooms;
+mod signaling;
 use rooms::{Rooms, CreateRoomRequest, CreateRoomResponse, create_room};
 use dashmap::DashMap;
 
@@ -36,6 +37,7 @@ async fn main() {
     let app = Router::new()
         .route("/", get(serve_index))
         .route("/api/rooms", post(create_room_handler))
+        .route("/api/rooms/:id/ws", axum::routing::get(signaling::ws_handler))
         .layer(CorsLayer::permissive())
         .layer(TraceLayer::new_for_http())
         .with_state(rooms);
