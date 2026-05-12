@@ -14,4 +14,7 @@ Cargo.lock
 *.swp
 *.swo
 
+# Certificates
+*.pem
+
 /meta/
