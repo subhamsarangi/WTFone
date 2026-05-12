@@ -1,0 +1,17 @@
+# Rust
+/target/
+Cargo.lock
+
+# Recordings
+/recordings/
+
+# Environment
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+/meta/

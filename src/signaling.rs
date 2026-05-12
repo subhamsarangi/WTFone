@@ -1,0 +1,1 @@
+// WebSocket signaling handler - placeholder
