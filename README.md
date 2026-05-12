@@ -1,4 +1,3 @@
-```markdown
 # WTFONE
 
 Peer-to-peer video chat. WebRTC + Rust backend.
