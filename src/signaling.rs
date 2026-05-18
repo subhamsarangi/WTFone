@@ -37,6 +37,7 @@ pub enum ServerMessage {
     #[serde(rename = "joined")]
     Joined {
         peer_id: String,
+        existing_peers: Vec<String>,
     },
     #[serde(rename = "peer_joined")]
     PeerJoined {
@@ -140,13 +141,18 @@ async fn handle_socket(
                                 }
                             };
                         
-                        // Send joined message
+                        // Send joined message with existing peers
                         {
                             let mut s = sender.lock().await;
+                            let existing_peer_ids: Vec<String> = existing_peers
+                                .iter()
+                                .map(|p| p.id.to_string())
+                                .collect();
                             let _ = s
                                 .send(axum::extract::ws::Message::Text(
                                     serde_json::to_string(&ServerMessage::Joined {
                                         peer_id: peer_id.to_string(),
+                                        existing_peers: existing_peer_ids,
                                     })
                                     .unwrap(),
                                 ))

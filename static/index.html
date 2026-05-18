@@ -610,7 +610,10 @@
         <div class="header-section">
             <a href="/" onclick="goHome(event)" style="display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit; cursor:pointer;">
                 <img src="/assets/logo.png" alt="WTFONE Logo">
-                <h1>WTFONE Video Chat</h1>
+                <div style="display:flex; flex-direction:column; gap:2px;">
+                    <h1>WTFONE Video Chat</h1>
+                    <div id="roomIdDisplay" style="font-size:0.85em; color:#a7f3d0; font-weight:500; display:none;">Room: <span id="roomIdText"></span></div>
+                </div>
             </a>
         </div>
         
@@ -1040,7 +1043,26 @@
                     document.getElementById('leaveBtn').disabled = false;
                     
                     document.getElementById('participantBadge').style.display = 'inline-flex';
-                    document.getElementById('participantCount').textContent = '1';
+                    
+                    // Display room ID in header
+                    const roomIdDisplay = document.getElementById('roomIdDisplay');
+                    const roomIdText = document.getElementById('roomIdText');
+                    if (roomIdDisplay && roomIdText) {
+                        roomIdText.textContent = roomId.substring(0, 8) + '...';
+                        roomIdDisplay.style.display = 'block';
+                    }
+                    
+                    // Create connections to existing peers
+                    if (msg.existing_peers && msg.existing_peers.length > 0) {
+                        log(`Found ${msg.existing_peers.length} existing peers`);
+                        for (const existingPeerId of msg.existing_peers) {
+                            await createPeerConnection(existingPeerId, true);
+                        }
+                    }
+                    
+                    // Update participant count (1 self + existing peers)
+                    const totalParticipants = 1 + (msg.existing_peers ? msg.existing_peers.length : 0);
+                    document.getElementById('participantCount').textContent = totalParticipants;
                     
                     document.getElementById('authSection').style.display = 'none';
                     document.getElementById('controlsSection').style.display = 'flex';
@@ -1344,6 +1366,12 @@
             
             document.getElementById('password').value = '';
             document.getElementById('participantBadge').style.display = 'none';
+            
+            // Hide room ID display
+            const roomIdDisplay = document.getElementById('roomIdDisplay');
+            if (roomIdDisplay) {
+                roomIdDisplay.style.display = 'none';
+            }
             
             document.getElementById('authSection').style.display = 'block';
             document.getElementById('controlsSection').style.display = 'none';
