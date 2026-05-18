@@ -867,6 +867,11 @@
                 window.history.pushState({}, '', `/room/${roomId}`);
                 const createdPassword = document.getElementById('password').value;
                 setAuthLoading(false);
+                
+                // Clear stored button HTML so switchTab isn't overwritten
+                const btn = document.getElementById('authActionBtn');
+                delete btn.dataset.originalHtml;
+                
                 switchTab('join', true);
                 document.getElementById('roomId').value = roomId;
                 document.getElementById('password').value = createdPassword;
