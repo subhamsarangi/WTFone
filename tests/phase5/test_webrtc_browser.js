@@ -4,7 +4,7 @@
 
 const { test, expect } = require('@playwright/test');
 
-const BASE_URL = 'http://localhost:8443';
+const BASE_URL = 'https://localhost:8443';
 const PASSWORD = 'test123';
 
 test.describe('Phase 5: WebRTC Client Implementation', () => {

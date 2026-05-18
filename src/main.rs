@@ -136,10 +136,36 @@ async fn create_room_handler(
 }
 
 async fn upload_recording_handler(
+    State(rooms): State<Rooms>,
     Path(room_id): Path<String>,
     mut multipart: Multipart,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
     tracing::info!("Recording upload for room {}", room_id);
+
+    // Validate room ID format
+    let parsed_uuid = match uuid::Uuid::parse_str(&room_id) {
+        Ok(id) => id,
+        Err(_) => {
+            tracing::warn!("Invalid room_id format in upload: {}", room_id);
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse {
+                    error: "Invalid room ID format".to_string(),
+                }),
+            ));
+        }
+    };
+
+    // Verify room exists in memory
+    if !rooms.contains_key(&parsed_uuid) {
+        tracing::warn!("Recording upload attempted for non-existent room: {}", room_id);
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse {
+                error: "Room not found".to_string(),
+            }),
+        ));
+    }
 
     // Create recordings directory
     let recordings_dir = PathBuf::from("recordings").join(&room_id);

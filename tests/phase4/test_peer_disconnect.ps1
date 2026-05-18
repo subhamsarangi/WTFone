@@ -1,7 +1,27 @@
 # Test peer disconnect broadcast
-# Start server first: cargo run
+$csharpCode = @"
+using System.Net;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 
-$baseUrl = "http://localhost:8443"
+public class SSLBypass {
+    public static void Bypass() {
+        ServicePointManager.ServerCertificateValidationCallback = ValidateCertificate;
+    }
+    
+    private static bool ValidateCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) {
+        return true;
+    }
+}
+"@
+
+try {
+    Add-Type -TypeDefinition $csharpCode -ErrorAction SilentlyContinue
+} catch {}
+
+[SSLBypass]::Bypass()
+
+$baseUrl = "https://localhost:8443"
 $password = "test123"
 
 # Step 1: Create room
@@ -18,7 +38,7 @@ Write-Host "Room created: $roomId" -ForegroundColor Green
 # Step 2: Connect peer A
 Write-Host "`nConnecting peer A..." -ForegroundColor Cyan
 $peerAWs = New-Object System.Net.WebSockets.ClientWebSocket
-$peerAUri = New-Object System.Uri("ws://localhost:8443/api/rooms/$roomId/ws")
+$peerAUri = New-Object System.Uri("wss://localhost:8443/api/rooms/$roomId/ws")
 $peerAWs.ConnectAsync($peerAUri, [System.Threading.CancellationToken]::None).Wait()
 Write-Host "Peer A connected" -ForegroundColor Green
 

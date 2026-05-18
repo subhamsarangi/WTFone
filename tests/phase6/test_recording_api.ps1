@@ -1,9 +1,29 @@
 # Phase 6: Recording Upload Test
-# Tests recording upload endpoint
+$csharpCode = @"
+using System.Net;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
+
+public class SSLBypass {
+    public static void Bypass() {
+        ServicePointManager.ServerCertificateValidationCallback = ValidateCertificate;
+    }
+    
+    private static bool ValidateCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) {
+        return true;
+    }
+}
+"@
+
+try {
+    Add-Type -TypeDefinition $csharpCode -ErrorAction SilentlyContinue
+} catch {}
+
+[SSLBypass]::Bypass()
 
 Write-Host "=== Phase 6: Recording Upload Test ===" -ForegroundColor Cyan
 
-$baseUrl = "http://localhost:8443"
+$baseUrl = "https://localhost:8443"
 $testPassed = $true
 
 # Test 1: Create room
@@ -68,6 +88,9 @@ try {
 # Test 3: Check recordings directory
 Write-Host "`nTest 3: Check recordings directory..." -ForegroundColor Yellow
 $recordingsDir = "recordings\$roomId"
+if (-not (Test-Path $recordingsDir)) {
+    $recordingsDir = "..\recordings\$roomId"
+}
 if (Test-Path $recordingsDir) {
     $files = Get-ChildItem $recordingsDir
     if ($files.Count -gt 0) {

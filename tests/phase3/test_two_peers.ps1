@@ -1,13 +1,36 @@
-# Create room
+# Create room and connect two peers
+$csharpCode = @"
+using System.Net;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
+
+public class SSLBypass {
+    public static void Bypass() {
+        ServicePointManager.ServerCertificateValidationCallback = ValidateCertificate;
+    }
+    
+    private static bool ValidateCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) {
+        return true;
+    }
+}
+"@
+
+try {
+    Add-Type -TypeDefinition $csharpCode -ErrorAction SilentlyContinue
+} catch {}
+
+[SSLBypass]::Bypass()
+
+$baseUrl = "https://localhost:8443"
 $body = @{ password = "test123" } | ConvertTo-Json
-$response = Invoke-WebRequest -Method POST -Uri http://localhost:8443/api/rooms -ContentType "application/json" -Body $body
+$response = Invoke-WebRequest -Method POST -Uri "$baseUrl/api/rooms" -ContentType "application/json" -Body $body -UseBasicParsing
 $roomId = ($response.Content | ConvertFrom-Json).room_id
 Write-Host "Created room: $roomId"
 
 # Connect peer 1
 $ws1 = New-Object System.Net.WebSockets.ClientWebSocket
 $cts1 = New-Object System.Threading.CancellationTokenSource
-$uri = "ws://localhost:8443/api/rooms/$roomId/ws"
+$uri = "wss://localhost:8443/api/rooms/$roomId/ws"
 $ws1.ConnectAsync($uri, $cts1.Token).Wait()
 Write-Host "Peer 1 connected"
 

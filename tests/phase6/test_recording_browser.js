@@ -6,7 +6,7 @@ const { test, expect } = require('@playwright/test');
 const fs = require('fs');
 const path = require('path');
 
-const BASE_URL = 'http://localhost:8443';
+const BASE_URL = 'https://localhost:8443';
 const PASSWORD = 'test123';
 
 test.describe('Phase 6: Recording Upload', () => {
@@ -232,12 +232,12 @@ test.describe('Phase 6: Recording Upload', () => {
     }
   });
 
-  test('Upload to non-existent room creates directory', async ({ page }) => {
+  test('Upload to non-existent room returns 404 error', async ({ page }) => {
     await page.goto(BASE_URL);
     
     const fakeRoomId = '00000000-0000-0000-0000-000000000000';
     
-    // Upload to non-existent room (server doesn't validate, just creates dir)
+    // Upload to non-existent room (server now validates room exists and returns 404)
     const uploadResponse = await page.evaluate(async (roomId) => {
       const blob = new Blob(['dummy webm data'], { type: 'video/webm' });
       const formData = new FormData();
@@ -256,9 +256,9 @@ test.describe('Phase 6: Recording Upload', () => {
       };
     }, fakeRoomId);
     
-    // Server accepts upload and creates directory (no room validation)
-    expect(uploadResponse.status).toBe(200);
-    expect(uploadResponse.ok).toBe(true);
+    // Server rejects upload and returns 404 (room validation)
+    expect(uploadResponse.status).toBe(404);
+    expect(uploadResponse.ok).toBe(false);
   });
 
   test('Upload without file returns error', async ({ page }) => {

@@ -10,25 +10,34 @@ module.exports = defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:8443',
+    baseURL: 'https://localhost:8443',
     trace: 'on-first-retry',
+    ignoreHTTPSErrors: true,
   },
 
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions: {
+          args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'],
+        },
+      },
     },
     {
       name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
+      use: {
+        ...devices['Desktop Firefox'],
+        launchOptions: {
+          firefoxUserPrefs: {
+            'media.navigator.streams.fake': true,
+            'media.navigator.permission.disabled': true,
+          },
+        },
+      },
     },
   ],
 
-  webServer: {
-    command: 'cargo run',
-    url: 'http://localhost:8443',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
+
 });

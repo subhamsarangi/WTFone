@@ -25,7 +25,8 @@ For production: use reverse proxy (nginx/cloudflared) or add tokio-rustls to mai
 
 ```bash
 cargo test
-cd tests && ./run_tests.ps1
+cd tests
+powershell -ExecutionPolicy Bypass -File .\run_tests.ps1
 npm test && npx playwright show-report
 ```
 
