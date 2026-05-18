@@ -239,6 +239,19 @@ async fn handle_socket(
                                 tracing::warn!("Target peer {} not found in room {}", to, room_id);
                             }
                         }
+                        ClientMessage::Ice { to, candidate } => {
+                            // Find target peer
+                            if let Some(target_peer) = crate::rooms::get_peer_from_room(&rooms, room_id, Uuid::parse_str(&to).unwrap_or_default()) {
+                                let msg = ServerMessage::Ice {
+                                    from: peer_id.to_string(),
+                                    candidate,
+                                };
+                                let _ = target_peer.tx.send(msg);
+                                tracing::debug!("Relayed ICE candidate from {} to {}", peer_id, to);
+                            } else {
+                                tracing::warn!("Target peer {} not found in room {}", to, room_id);
+                            }
+                        }
                         _ => {
                             tracing::debug!("Received message from peer {}: {:?}", peer_id, client_msg);
                         }
@@ -253,6 +266,15 @@ async fn handle_socket(
     }
 
     // Cleanup on disconnect
+    if let Some(room) = rooms.get(&room_id) {
+        // Broadcast peer_left to remaining peers
+        for peer in room.peers.iter() {
+            let _ = peer.tx.send(ServerMessage::PeerLeft {
+                peer_id: peer_id.to_string(),
+            });
+        }
+    }
+    
     crate::rooms::remove_peer_from_room(&rooms, room_id, peer_id);
     tracing::info!("Peer {} left room {}", peer_id, room_id);
 }
