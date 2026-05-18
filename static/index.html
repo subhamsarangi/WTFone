@@ -844,11 +844,11 @@
         
         function displayRemoteVideo(peerId, stream) {
             const videoSection = document.getElementById('videoSection');
-            let remoteContainer = document.getElementById(`remote-video-${peerId}`);
+            let remoteContainer = document.getElementById(`remote-container-${peerId}`);
             
             if (!remoteContainer) {
                 remoteContainer = document.createElement('div');
-                remoteContainer.id = `remote-video-${peerId}`;
+                remoteContainer.id = `remote-container-${peerId}`;
                 remoteContainer.className = 'video-container';
                 
                 const video = document.createElement('video');
@@ -1019,7 +1019,7 @@
                 peerConnections.delete(remotePeerId);
             }
             
-            const videoContainer = document.getElementById(`remote-video-${remotePeerId}`);
+            const videoContainer = document.getElementById(`remote-container-${remotePeerId}`);
             if (videoContainer) {
                 videoContainer.remove();
             }
