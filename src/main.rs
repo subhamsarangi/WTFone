@@ -11,6 +11,7 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
+use tower_http::services::ServeDir;
 use tracing_subscriber;
 
 mod rooms;
@@ -38,6 +39,7 @@ async fn main() {
         .route("/", get(serve_index))
         .route("/api/rooms", post(create_room_handler))
         .route("/api/rooms/:id/ws", axum::routing::get(signaling::ws_handler))
+        .nest_service("/assets", ServeDir::new("assets"))
         .layer(CorsLayer::permissive())
         .layer(TraceLayer::new_for_http())
         .with_state(rooms);
