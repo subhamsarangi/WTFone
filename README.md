@@ -15,7 +15,7 @@ cargo run
 WebRTC requires HTTPS for camera/mic access (except localhost). For HTTPS testing:
 
 ```bash
-mkcert localhost 127.0.0.1 ::1
+mkcert localhost 127.0.0.1 ::1 192.168.29.76
 # Creates: localhost+2.pem, localhost+2-key.pem
 ```
 

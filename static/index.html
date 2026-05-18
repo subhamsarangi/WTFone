@@ -258,6 +258,7 @@
         let localStream = null;
         let mediaRecorder = null;
         let recordedChunks = [];
+        let recordingFilename = null;
         const peerConnections = new Map();
         const remoteStreams = new Map();
         
@@ -679,46 +680,103 @@
         function toggleRecording() {
             if (!mediaRecorder) {
                 recordedChunks = [];
-                mediaRecorder = new MediaRecorder(localStream);
-                mediaRecorder.ondataavailable = (event) => {
+                
+                // Check if stream has tracks
+                if (!localStream || localStream.getTracks().length === 0) {
+                    log('Error: No local stream available for recording', 'error');
+                    return;
+                }
+                
+                const timestamp = Date.now();
+                recordingFilename = `${timestamp}_${peerId}.webm`;
+                log(`Recording session started. Filename: ${recordingFilename}`);
+
+                try {
+                    mediaRecorder = new MediaRecorder(localStream, {
+                        mimeType: 'video/webm;codecs=vp8,opus',
+                        videoBitsPerSecond: 800000,
+                        audioBitsPerSecond: 64000
+                    });
+                } catch (e) {
+                    log(`MediaRecorder error: ${e.message}`, 'error');
+                    try {
+                        mediaRecorder = new MediaRecorder(localStream, {
+                            videoBitsPerSecond: 800000,
+                            audioBitsPerSecond: 64000
+                        });
+                    } catch (e2) {
+                        log(`Failed to create MediaRecorder: ${e2.message}`, 'error');
+                        return;
+                    }
+                }
+                
+                mediaRecorder.ondataavailable = async (event) => {
+                    log(`Data available: ${event.data.size} bytes`);
                     if (event.data.size > 0) {
-                        recordedChunks.push(event.data);
+                        await uploadRecordingChunk(event.data);
                     }
                 };
-                mediaRecorder.onstop = async () => {
-                    const blob = new Blob(recordedChunks, { type: 'video/webm' });
-                    await uploadRecording(blob);
+                
+                mediaRecorder.onstop = () => {
+                    log('Recording stopped. All chunks uploaded.');
                     mediaRecorder = null;
+                    recordingFilename = null;
                 };
-                mediaRecorder.start();
+                
+                mediaRecorder.onerror = (event) => {
+                    log(`MediaRecorder error: ${event.error}`, 'error');
+                };
+                
+                mediaRecorder.start(10000); // 10 second chunks
                 document.getElementById('recordBtn').textContent = 'Stop Recording';
                 log('Recording started');
             } else {
-                mediaRecorder.stop();
-                document.getElementById('recordBtn').textContent = 'Start Recording';
-                log('Recording stopped');
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                    document.getElementById('recordBtn').textContent = 'Start Recording';
+                    log('Recording stopped');
+                }
             }
         }
         
-        async function uploadRecording(blob) {
+        async function uploadRecordingChunk(blob) {
             try {
+                if (!roomId) {
+                    log('Error: Not in a room, cannot upload recording', 'error');
+                    return;
+                }
+                
+                if (!peerId) {
+                    log('Error: Peer ID not set, cannot upload recording', 'error');
+                    return;
+                }
+                
+                if (!recordingFilename) {
+                    log('Error: Recording filename not set', 'error');
+                    return;
+                }
+                
+                log(`Uploading chunk (${(blob.size / 1024).toFixed(1)} KB)...`);
+                
                 const formData = new FormData();
-                const timestamp = Date.now();
-                const filename = `${timestamp}_${peerId}.webm`;
-                formData.append('file', blob, filename);
+                formData.append('file', blob, recordingFilename);
                 
                 const response = await fetch(`/api/rooms/${roomId}/recording`, {
                     method: 'POST',
                     body: formData
                 });
                 
+                const responseText = await response.text();
+                log(`Chunk upload response: ${response.status} ${response.statusText}`);
+                
                 if (response.ok) {
-                    log('Recording uploaded successfully');
+                    log('Chunk uploaded successfully');
                 } else {
-                    log('Failed to upload recording', 'error');
+                    log(`Failed to upload chunk: ${responseText}`, 'error');
                 }
             } catch (error) {
                 log(`Upload error: ${error.message}`, 'error');
+                console.error('Upload error details:', error);
             }
         }
         

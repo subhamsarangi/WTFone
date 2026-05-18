@@ -4,7 +4,7 @@ use axum::{
     http::{header, StatusCode},
     response::IntoResponse,
     Json,
-    extract::{State, Path, Multipart},
+    extract::{State, Path, Multipart, DefaultBodyLimit},
 };
 use serde::Serialize;
 use std::net::SocketAddr;
@@ -41,7 +41,7 @@ async fn main() {
         .route("/room/:id", get(serve_index))
         .route("/api/rooms", post(create_room_handler))
         .route("/api/rooms/:id/ws", axum::routing::get(signaling::ws_handler))
-        .route("/api/rooms/:id/recording", post(upload_recording_handler))
+        .route("/api/rooms/:id/recording", post(upload_recording_handler).layer(DefaultBodyLimit::max(250 * 1024 * 1024)))
         .route("/api/local-ip", get(get_local_ip_handler))
         .nest_service("/assets", ServeDir::new("assets"))
         .layer(CorsLayer::permissive())
@@ -153,34 +153,57 @@ async fn upload_recording_handler(
         (
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse {
-                error: "Invalid multipart data".to_string(),
+                error: format!("Invalid multipart data: {}", e),
             }),
         )
     })? {
         let name = field.name().unwrap_or("").to_string();
+        tracing::debug!("Multipart field: {}", name);
         
         if name == "file" {
             let filename = field.file_name()
                 .map(|s| s.to_string())
                 .unwrap_or_else(|| format!("{}_{}.webm", chrono::Utc::now().timestamp(), "unknown"));
             
+            tracing::info!("Processing file: {}", filename);
+            
             let data = field.bytes().await.map_err(|e| {
                 tracing::error!("Failed to read file data: {}", e);
                 (
                     StatusCode::BAD_REQUEST,
                     Json(ErrorResponse {
-                        error: "Failed to read file data".to_string(),
+                        error: format!("Failed to read file data: {}", e),
                     }),
                 )
             })?;
 
+            tracing::info!("File size: {} bytes", data.len());
+
+            use tokio::fs::OpenOptions;
+            use tokio::io::AsyncWriteExt;
+
             let filepath = recordings_dir.join(&filename);
-            tokio::fs::write(&filepath, &data).await.map_err(|e| {
-                tracing::error!("Failed to write file: {}", e);
+            let mut file = OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(&filepath)
+                .await
+                .map_err(|e| {
+                    tracing::error!("Failed to open file in append mode: {}", e);
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ErrorResponse {
+                            error: format!("Failed to open file: {}", e),
+                        }),
+                    )
+                })?;
+
+            file.write_all(&data).await.map_err(|e| {
+                tracing::error!("Failed to write chunk to file: {}", e);
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
                     Json(ErrorResponse {
-                        error: "Failed to save recording".to_string(),
+                        error: format!("Failed to save chunk: {}", e),
                     }),
                 )
             })?;
@@ -188,11 +211,13 @@ async fn upload_recording_handler(
             tracing::info!("Saved recording: {:?}", filepath);
             return Ok((StatusCode::OK, Json(serde_json::json!({
                 "success": true,
-                "filename": filename
+                "filename": filename,
+                "size": data.len()
             }))));
         }
     }
 
+    tracing::warn!("No file field found in multipart data");
     Err((
         StatusCode::BAD_REQUEST,
         Json(ErrorResponse {
