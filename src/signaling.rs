@@ -275,6 +275,11 @@ async fn handle_socket(
         }
     }
     
-    crate::rooms::remove_peer_from_room(&rooms, room_id, peer_id);
+    let is_empty = crate::rooms::remove_peer_from_room(&rooms, room_id, peer_id);
     tracing::info!("Peer {} left room {}", peer_id, room_id);
+
+    if is_empty {
+        tracing::info!("Room {} is empty! Triggering smart grid build.", room_id);
+        crate::grid::spawn_grid_processing(room_id.to_string());
+    }
 }

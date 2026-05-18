@@ -11,13 +11,11 @@ const PASSWORD = 'test123';
 
 test.describe('Phase 6: Recording Upload', () => {
 
-  test('Recording button exists and is disabled initially', async ({ page }) => {
+  test('Controls are hidden initially', async ({ page }) => {
     await page.goto(BASE_URL);
     
-    const recordBtn = await page.locator('#recordBtn');
-    await expect(recordBtn).toBeVisible();
-    await expect(recordBtn).toBeDisabled();
-    await expect(recordBtn).toContainText('Start Recording');
+    const controlsSection = page.locator('#controlsSection');
+    await expect(controlsSection).toBeHidden();
   });
 
   test('Recording button enables after join', async ({ page }) => {

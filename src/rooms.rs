@@ -90,11 +90,13 @@ pub fn add_peer_to_room(
     })
 }
 
-/// Remove peer from room
-pub fn remove_peer_from_room(rooms: &Rooms, room_id: Uuid, peer_id: Uuid) {
+/// Remove peer from room, returns true if room is empty
+pub fn remove_peer_from_room(rooms: &Rooms, room_id: Uuid, peer_id: Uuid) -> bool {
     if let Some(room) = rooms.get(&room_id) {
         room.peers.remove(&peer_id);
+        return room.peers.is_empty();
     }
+    true
 }
 
 /// Get peer from room

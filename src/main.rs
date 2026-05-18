@@ -18,6 +18,7 @@ use axum_server::tls_rustls::RustlsConfig;
 
 mod rooms;
 mod signaling;
+pub mod grid;
 use rooms::{Rooms, CreateRoomRequest, CreateRoomResponse, create_room};
 use dashmap::DashMap;
 

@@ -237,6 +237,45 @@
             box-shadow: none;
         }
 
+        #controlsSection {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 16, 21, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 100px;
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 1000;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            width: auto;
+            margin: 0;
+            display: none; /* Hidden until user joins */
+        }
+
+        #controlsSection h3 {
+            display: none; /* Hide 'Call Controls' text for sleek navbar */
+        }
+
+        #controlsSection .button-group {
+            display: flex;
+            gap: 15px;
+            margin: 0 !important;
+        }
+
+        #controlsSection button {
+            border-radius: 50px;
+            padding: 12px 24px;
+            width: auto;
+            white-space: nowrap;
+            font-weight: 600;
+        }
+
         #joinBtn {
             background: linear-gradient(135deg, #3b82f6, #1d4ed8);
             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
@@ -497,21 +536,16 @@
                 </div>
             </div>
             
-            <div class="join-section" id="controlsSection">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h3><i class="fa-solid fa-sliders"></i> Call Controls</h3>
-                    <span id="participantBadge" class="participant-badge" style="display: none;">
-                        <span class="live-dot"></span>
-                        <span id="participantCount">1</span> Active
-                    </span>
-                </div>
+            <div id="controlsSection">
+                <span id="participantBadge" class="participant-badge" style="display: none; margin-right: 15px;">
+                    <span class="live-dot"></span>
+                    <span id="participantCount">1</span> Active
+                </span>
                 <div class="button-group">
-                    <button id="muteAudioBtn" onclick="toggleAudio()" disabled><i class="fa-solid fa-microphone"></i> Mute Audio</button>
-                    <button id="muteVideoBtn" onclick="toggleVideo()" disabled><i class="fa-solid fa-video"></i> Mute Video</button>
-                </div>
-                <div class="button-group" style="margin-top: 10px;">
-                    <button id="recordBtn" onclick="toggleRecording()" disabled><i class="fa-solid fa-circle"></i> Start Recording</button>
-                    <button id="leaveBtn" onclick="leaveRoom()" disabled><i class="fa-solid fa-phone-slash"></i> Leave Room</button>
+                    <button id="muteAudioBtn" onclick="toggleAudio()" disabled><i class="fa-solid fa-microphone"></i> Audio</button>
+                    <button id="muteVideoBtn" onclick="toggleVideo()" disabled><i class="fa-solid fa-video"></i> Video</button>
+                    <button id="recordBtn" onclick="toggleRecording()" disabled><i class="fa-solid fa-circle"></i> Record</button>
+                    <button id="leaveBtn" onclick="leaveRoom()" disabled><i class="fa-solid fa-phone-slash"></i> Leave</button>
                 </div>
             </div>
         </div>
@@ -884,7 +918,7 @@
                     document.getElementById('participantCount').textContent = '1';
                     
                     document.getElementById('authSection').style.display = 'none';
-                    document.getElementById('controlsSection').style.display = 'block';
+                    document.getElementById('controlsSection').style.display = 'flex';
                     
                 } else if (msg.type === 'peer_joined') {
                     log(`Peer joined: ${msg.peer_id}`);

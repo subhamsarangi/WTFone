@@ -10,6 +10,11 @@ cargo run
 # http://localhost:3000
 ```
 
+Stopping the server 
+```powershell
+@("cargo", "wtfone") | ForEach-Object { Stop-Process -Name $_ -Force -ErrorAction SilentlyContinue }
+```
+
 ## HTTPS (Local Dev)
 
 WebRTC requires HTTPS for camera/mic access (except localhost). For HTTPS testing:
@@ -23,8 +28,7 @@ For production: use reverse proxy (nginx/cloudflared) or add tokio-rustls to mai
 
 ## Testing
 
-```bash
-cargo test
+```powershell
 cd tests
 powershell -ExecutionPolicy Bypass -File .\run_tests.ps1
 npm test && npx playwright show-report
