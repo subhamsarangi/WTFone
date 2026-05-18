@@ -642,7 +642,12 @@
                 
                 <div class="form-group">
                     <label for="password" id="passwordLabel"><i class="fa-solid fa-key"></i> Password</label>
-                    <input type="password" id="password" placeholder="Enter password">
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input type="password" id="password" placeholder="Enter password" style="flex: 1;">
+                        <button type="button" id="togglePasswordBtn" onclick="togglePasswordVisibility()" style="width: auto; padding: 10px 12px; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 6px;">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
                 
                 <div>
@@ -694,7 +699,7 @@
         let currentTab = 'join';
         let hasSignalingError = false;
         
-        function switchTab(tab) {
+        function switchTab(tab, preservePassword = false) {
             currentTab = tab;
             const tabJoin = document.getElementById('tabJoin');
             const tabCreate = document.getElementById('tabCreate');
@@ -703,8 +708,10 @@
             const passwordInput = document.getElementById('password');
             const authActionBtn = document.getElementById('authActionBtn');
             
-            // Clear inputs and status
-            passwordInput.value = '';
+            // Clear inputs and status (unless preserving password after room create)
+            if (!preservePassword) {
+                passwordInput.value = '';
+            }
             showStatus('', 'info');
             
             if (tab === 'join') {
@@ -725,6 +732,18 @@
                 authActionBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Create Room';
                 authActionBtn.classList.add('btn-create-active');
                 authActionBtn.classList.remove('btn-join-active');
+            }
+        }
+        
+        function togglePasswordVisibility() {
+            const input = document.getElementById('password');
+            const btn = document.getElementById('togglePasswordBtn');
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+            } else {
+                input.type = 'password';
+                btn.innerHTML = '<i class="fa-solid fa-eye"></i>';
             }
         }
         
@@ -840,10 +859,12 @@
                 showStatus(`Room created: ${roomId}`, 'success');
                 log(`Room created: ${roomId}`);
                 
-                // Navigate to the room page and switch to join tab
+                // Navigate to the room page and switch to join tab (preserve password)
                 window.history.pushState({}, '', `/room/${roomId}`);
-                switchTab('join');
+                const createdPassword = document.getElementById('password').value;
+                switchTab('join', true);
                 document.getElementById('roomId').value = roomId;
+                document.getElementById('password').value = createdPassword;
                 
                 setAuthLoading(false);
             } catch (error) {
