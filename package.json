@@ -1,0 +1,14 @@
+{
+  "name": "wtfone",
+  "version": "0.1.0",
+  "description": "WebRTC video chat application",
+  "scripts": {
+    "test": "playwright test",
+    "test:phase5": "playwright test tests/phase5/test_webrtc_browser.js",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  }
+}

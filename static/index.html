@@ -4,6 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WTFONE Video Chat</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+    <link rel="manifest" href="/assets/site.webmanifest">
+    
+    <!-- Meta tags for link sharing -->
+    <meta property="og:title" content="WTFONE Video Chat">
+    <meta property="og:description" content="Secure peer-to-peer video chat. Create or join a room and connect instantly.">
+    <meta property="og:image" content="/assets/logo.png">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="WTFONE Video Chat">
+    <meta name="twitter:description" content="Secure peer-to-peer video chat. Create or join a room and connect instantly.">
+    <meta name="twitter:image" content="/assets/logo.png">
     <style>
         * {
             margin: 0;
@@ -21,7 +38,7 @@
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
             flex: 1;
@@ -31,19 +48,21 @@
         
         h1 {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             font-size: 2.5em;
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
         }
         
         .join-section {
             background: #2a2a2a;
-            padding: 30px;
+            padding: 20px;
             border-radius: 8px;
-            margin-bottom: 30px;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-            width: 100%;
         }
         
         .form-group {
@@ -120,20 +139,52 @@
             display: block;
         }
         
+        .video-section {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .video-container {
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            aspect-ratio: 16 / 9;
+        }
+        
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .video-label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        
         .console {
             background: #0a0a0a;
             border: 1px solid #333;
             border-radius: 4px;
             padding: 15px;
-            height: 300px;
+            height: 200px;
             overflow-y: auto;
             font-family: 'Courier New', monospace;
-            font-size: 0.9em;
+            font-size: 0.85em;
             line-height: 1.4;
         }
         
         .console-line {
-            margin-bottom: 5px;
+            margin-bottom: 3px;
             color: #0f0;
         }
         
@@ -144,28 +195,55 @@
         .console-line.info {
             color: #0ff;
         }
+        
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>WTFONE Video Chat</h1>
-        
-        <div class="join-section">
-            <div id="status" class="status"></div>
-            
-            <div class="form-group">
-                <label for="roomId">Room ID</label>
-                <input type="text" id="roomId" placeholder="Leave empty to create new room">
-            </div>
-            
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" placeholder="Enter password">
-            </div>
-            
-            <button id="joinBtn" onclick="handleJoin()">Join Room</button>
-            <button id="createBtn" onclick="handleCreate()" style="margin-top: 10px;">Create New Room</button>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px;">
+            <img src="/assets/logo.png" alt="WTFONE Logo" style="height: 60px; width: auto;">
+            <h1 style="margin: 0;">WTFONE Video Chat</h1>
         </div>
+        
+        <div class="controls">
+            <div class="join-section">
+                <div id="status" class="status"></div>
+                
+                <div class="form-group">
+                    <label for="roomId">Room ID</label>
+                    <input type="text" id="roomId" placeholder="Leave empty to create new room">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter password">
+                </div>
+                
+                <div class="button-group">
+                    <button id="joinBtn" onclick="handleJoin()">Join Room</button>
+                    <button id="createBtn" onclick="handleCreate()">Create Room</button>
+                </div>
+            </div>
+            
+            <div class="join-section">
+                <h3 style="margin-bottom: 15px;">Call Controls</h3>
+                <div class="button-group">
+                    <button id="muteAudioBtn" onclick="toggleAudio()" disabled>Mute Audio</button>
+                    <button id="muteVideoBtn" onclick="toggleVideo()" disabled>Mute Video</button>
+                </div>
+                <div class="button-group" style="margin-top: 10px;">
+                    <button id="recordBtn" onclick="toggleRecording()" disabled>Start Recording</button>
+                    <button id="leaveBtn" onclick="leaveRoom()" disabled>Leave Room</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="video-section" id="videoSection"></div>
         
         <div>
             <h3 style="margin-bottom: 10px;">Console</h3>
@@ -177,6 +255,16 @@
         let ws = null;
         let peerId = null;
         let roomId = null;
+        let localStream = null;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        const peerConnections = new Map();
+        const remoteStreams = new Map();
+        
+        const STUN_SERVERS = [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' }
+        ];
         
         function log(message, type = 'info') {
             const console = document.getElementById('console');
@@ -234,7 +322,18 @@
             }
             
             try {
-                showStatus('Connecting...', 'info');
+                showStatus('Requesting camera/mic...', 'info');
+                log('Requesting camera/mic permissions...');
+                
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: { ideal: 1280 }, height: { ideal: 720 } },
+                    audio: true
+                });
+                
+                log('Camera/mic granted');
+                displayLocalVideo(localStream);
+                
+                showStatus('Connecting to room...', 'info');
                 log(`Joining room ${roomId}...`);
                 
                 const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -244,7 +343,6 @@
                 
                 ws.onopen = () => {
                     log('WebSocket connected');
-                    // Send join message
                     const joinMsg = {
                         type: 'join',
                         room_id: roomId,
@@ -257,20 +355,7 @@
                 ws.onmessage = (event) => {
                     try {
                         const msg = JSON.parse(event.data);
-                        log(`Received: ${JSON.stringify(msg)}`);
-                        
-                        if (msg.type === 'joined') {
-                            peerId = msg.peer_id;
-                            showStatus(`Joined as peer ${peerId}`, 'success');
-                            log(`Joined as peer ${peerId}`);
-                        } else if (msg.type === 'peer_joined') {
-                            log(`Peer joined: ${msg.peer_id}`);
-                        } else if (msg.type === 'peer_left') {
-                            log(`Peer left: ${msg.peer_id}`);
-                        } else if (msg.type === 'error') {
-                            showStatus(`Error: ${msg.message}`, 'error');
-                            log(`Server error: ${msg.message}`, 'error');
-                        }
+                        handleSignalingMessage(msg);
                     } catch (error) {
                         log(`Failed to parse message: ${error.message}`, 'error');
                     }
@@ -293,7 +378,297 @@
             }
         }
         
-        // Allow Enter key to join
+        function displayLocalVideo(stream) {
+            const videoSection = document.getElementById('videoSection');
+            let localContainer = document.getElementById('local-video-container');
+            
+            if (!localContainer) {
+                localContainer = document.createElement('div');
+                localContainer.id = 'local-video-container';
+                localContainer.className = 'video-container';
+                
+                const video = document.createElement('video');
+                video.id = 'local-video';
+                video.autoplay = true;
+                video.muted = true;
+                video.playsinline = true;
+                
+                const label = document.createElement('div');
+                label.className = 'video-label';
+                label.textContent = 'You (Local)';
+                
+                localContainer.appendChild(video);
+                localContainer.appendChild(label);
+                videoSection.insertBefore(localContainer, videoSection.firstChild);
+            }
+            
+            const video = document.getElementById('local-video');
+            video.srcObject = stream;
+        }
+        
+        function displayRemoteVideo(peerId, stream) {
+            const videoSection = document.getElementById('videoSection');
+            let remoteContainer = document.getElementById(`remote-video-${peerId}`);
+            
+            if (!remoteContainer) {
+                remoteContainer = document.createElement('div');
+                remoteContainer.id = `remote-video-${peerId}`;
+                remoteContainer.className = 'video-container';
+                
+                const video = document.createElement('video');
+                video.id = `remote-video-${peerId}`;
+                video.autoplay = true;
+                video.playsinline = true;
+                
+                const label = document.createElement('div');
+                label.className = 'video-label';
+                label.textContent = `Peer: ${peerId.substring(0, 8)}...`;
+                
+                remoteContainer.appendChild(video);
+                remoteContainer.appendChild(label);
+                videoSection.appendChild(remoteContainer);
+            }
+            
+            const video = document.getElementById(`remote-video-${peerId}`);
+            video.srcObject = stream;
+        }
+        
+        async function handleSignalingMessage(msg) {
+            try {
+                if (msg.type === 'joined') {
+                    peerId = msg.peer_id;
+                    showStatus(`Joined as peer ${peerId.substring(0, 8)}...`, 'success');
+                    log(`Joined as peer ${peerId}`);
+                    document.getElementById('muteAudioBtn').disabled = false;
+                    document.getElementById('muteVideoBtn').disabled = false;
+                    document.getElementById('recordBtn').disabled = false;
+                    document.getElementById('leaveBtn').disabled = false;
+                    
+                } else if (msg.type === 'peer_joined') {
+                    log(`Peer joined: ${msg.peer_id}`);
+                    await createPeerConnection(msg.peer_id, true);
+                    
+                } else if (msg.type === 'offer') {
+                    log(`Received offer from ${msg.from}`);
+                    await handleOffer(msg.from, msg.sdp);
+                    
+                } else if (msg.type === 'answer') {
+                    log(`Received answer from ${msg.from}`);
+                    await handleAnswer(msg.from, msg.sdp);
+                    
+                } else if (msg.type === 'ice') {
+                    log(`Received ICE from ${msg.from}`);
+                    await handleIce(msg.from, msg.candidate);
+                    
+                } else if (msg.type === 'peer_left') {
+                    log(`Peer left: ${msg.peer_id}`);
+                    closePeerConnection(msg.peer_id);
+                    
+                } else if (msg.type === 'error') {
+                    showStatus(`Error: ${msg.message}`, 'error');
+                    log(`Server error: ${msg.message}`, 'error');
+                }
+            } catch (error) {
+                log(`Error handling message: ${error.message}`, 'error');
+            }
+        }
+        
+        async function createPeerConnection(remotePeerId, initiator) {
+            if (peerConnections.has(remotePeerId)) {
+                return peerConnections.get(remotePeerId);
+            }
+            
+            const peerConnection = new RTCPeerConnection({
+                iceServers: STUN_SERVERS
+            });
+            
+            peerConnections.set(remotePeerId, peerConnection);
+            
+            // Add local tracks
+            if (localStream) {
+                localStream.getTracks().forEach(track => {
+                    peerConnection.addTrack(track, localStream);
+                });
+            }
+            
+            // Handle ICE candidates
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate) {
+                    ws.send(JSON.stringify({
+                        type: 'ice',
+                        to: remotePeerId,
+                        candidate: event.candidate
+                    }));
+                }
+            };
+            
+            // Handle remote stream
+            peerConnection.ontrack = (event) => {
+                log(`Received track from ${remotePeerId}`);
+                remoteStreams.set(remotePeerId, event.streams[0]);
+                displayRemoteVideo(remotePeerId, event.streams[0]);
+            };
+            
+            // Handle connection state changes
+            peerConnection.onconnectionstatechange = () => {
+                log(`Connection state with ${remotePeerId}: ${peerConnection.connectionState}`);
+                if (peerConnection.connectionState === 'failed' || peerConnection.connectionState === 'disconnected') {
+                    closePeerConnection(remotePeerId);
+                }
+            };
+            
+            if (initiator) {
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+                ws.send(JSON.stringify({
+                    type: 'offer',
+                    to: remotePeerId,
+                    sdp: offer
+                }));
+                log(`Sent offer to ${remotePeerId}`);
+            }
+            
+            return peerConnection;
+        }
+        
+        async function handleOffer(remotePeerId, offer) {
+            let peerConnection = peerConnections.get(remotePeerId);
+            if (!peerConnection) {
+                peerConnection = await createPeerConnection(remotePeerId, false);
+            }
+            
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            ws.send(JSON.stringify({
+                type: 'answer',
+                to: remotePeerId,
+                sdp: answer
+            }));
+            log(`Sent answer to ${remotePeerId}`);
+        }
+        
+        async function handleAnswer(remotePeerId, answer) {
+            const peerConnection = peerConnections.get(remotePeerId);
+            if (peerConnection) {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+                log(`Set remote description for ${remotePeerId}`);
+            }
+        }
+        
+        async function handleIce(remotePeerId, candidate) {
+            const peerConnection = peerConnections.get(remotePeerId);
+            if (peerConnection && candidate) {
+                try {
+                    await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+                } catch (error) {
+                    log(`Failed to add ICE candidate: ${error.message}`, 'error');
+                }
+            }
+        }
+        
+        function closePeerConnection(remotePeerId) {
+            const peerConnection = peerConnections.get(remotePeerId);
+            if (peerConnection) {
+                peerConnection.close();
+                peerConnections.delete(remotePeerId);
+            }
+            
+            const videoContainer = document.getElementById(`remote-video-${remotePeerId}`);
+            if (videoContainer) {
+                videoContainer.remove();
+            }
+            
+            remoteStreams.delete(remotePeerId);
+        }
+        
+        function toggleAudio() {
+            if (localStream) {
+                const audioTracks = localStream.getAudioTracks();
+                const enabled = audioTracks[0]?.enabled ?? false;
+                audioTracks.forEach(track => track.enabled = !enabled);
+                document.getElementById('muteAudioBtn').textContent = enabled ? 'Unmute Audio' : 'Mute Audio';
+                log(`Audio ${enabled ? 'muted' : 'unmuted'}`);
+            }
+        }
+        
+        function toggleVideo() {
+            if (localStream) {
+                const videoTracks = localStream.getVideoTracks();
+                const enabled = videoTracks[0]?.enabled ?? false;
+                videoTracks.forEach(track => track.enabled = !enabled);
+                document.getElementById('muteVideoBtn').textContent = enabled ? 'Enable Video' : 'Disable Video';
+                log(`Video ${enabled ? 'disabled' : 'enabled'}`);
+            }
+        }
+        
+        function toggleRecording() {
+            if (!mediaRecorder) {
+                recordedChunks = [];
+                mediaRecorder = new MediaRecorder(localStream);
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        recordedChunks.push(event.data);
+                    }
+                };
+                mediaRecorder.onstop = async () => {
+                    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                    await uploadRecording(blob);
+                    mediaRecorder = null;
+                };
+                mediaRecorder.start();
+                document.getElementById('recordBtn').textContent = 'Stop Recording';
+                log('Recording started');
+            } else {
+                mediaRecorder.stop();
+                document.getElementById('recordBtn').textContent = 'Start Recording';
+                log('Recording stopped');
+            }
+        }
+        
+        async function uploadRecording(blob) {
+            try {
+                const formData = new FormData();
+                formData.append('file', blob, `recording_${Date.now()}.webm`);
+                
+                const response = await fetch(`/api/rooms/${roomId}/recording`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    log('Recording uploaded successfully');
+                } else {
+                    log('Failed to upload recording', 'error');
+                }
+            } catch (error) {
+                log(`Upload error: ${error.message}`, 'error');
+            }
+        }
+        
+        function leaveRoom() {
+            if (ws) {
+                ws.close();
+            }
+            
+            peerConnections.forEach((pc) => pc.close());
+            peerConnections.clear();
+            
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+            
+            document.getElementById('videoSection').innerHTML = '';
+            document.getElementById('muteAudioBtn').disabled = true;
+            document.getElementById('muteVideoBtn').disabled = true;
+            document.getElementById('recordBtn').disabled = true;
+            document.getElementById('leaveBtn').disabled = true;
+            
+            showStatus('Left room', 'info');
+            log('Left room');
+        }
+        
         document.getElementById('password').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 handleJoin();

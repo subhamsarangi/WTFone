@@ -18,3 +18,11 @@ Cargo.lock
 *.pem
 
 /meta/
+
+/node_modules/
+
+/test-results/
+
+/playwright-report/
+
+test_output*.txt

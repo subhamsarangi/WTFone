@@ -16,6 +16,17 @@ cargo run
 
 Server: `http://localhost:3000`
 
+
+## TEST
+```
+cd tests
+./run_tests.ps1
+```
+
+```
+npm test
+npx playwright show-report
+```
 ## API
 
 **Create room:**

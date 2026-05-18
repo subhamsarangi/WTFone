@@ -44,7 +44,7 @@ async fn main() {
 
     // Bind and run
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
-    tracing::info!("Server listening on {}", addr);
+    tracing::info!("Server listening on http://{}", addr);
 
     let listener = tokio::net::TcpListener::bind(addr)
         .await
