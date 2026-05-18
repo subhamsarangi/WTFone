@@ -362,7 +362,8 @@
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 20px;
             margin-bottom: 10px;
-            min-height: 150px;
+            min-height: 300px;
+            width: 100%;
         }
         
         .video-container {
@@ -1198,7 +1199,7 @@
                 peerConnection = await createPeerConnection(remotePeerId, false);
             }
             
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+            await peerConnection.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: offer }));
             const answer = await peerConnection.createAnswer();
             await peerConnection.setLocalDescription(answer);
             ws.send(JSON.stringify({
@@ -1212,7 +1213,7 @@
         async function handleAnswer(remotePeerId, answer) {
             const peerConnection = peerConnections.get(remotePeerId);
             if (peerConnection) {
-                await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+                await peerConnection.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: answer }));
                 log(`Set remote description for ${remotePeerId}`);
             }
         }
