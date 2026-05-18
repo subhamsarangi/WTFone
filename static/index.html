@@ -448,6 +448,117 @@
         .console-line.info {
             color: #93c5fd;
         }
+
+        /* ── Mobile responsive ── */
+        @media (max-width: 640px) {
+            .container {
+                padding: 16px 12px;
+                gap: 14px;
+            }
+
+            .header-section {
+                gap: 10px;
+                margin-bottom: 4px;
+            }
+
+            .header-section img {
+                height: 36px;
+            }
+
+            h1 {
+                font-size: 1.4em;
+            }
+
+            .join-section {
+                padding: 16px;
+                max-width: 100%;
+            }
+
+            .tab-btn {
+                padding: 8px 6px;
+                font-size: 0.82em;
+            }
+
+            input {
+                font-size: 16px; /* prevent iOS zoom on focus */
+                padding: 11px 12px;
+            }
+
+            button {
+                font-size: 0.9em;
+                padding: 11px 16px;
+            }
+
+            /* Video grid: single column on phones */
+            .video-section {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                margin-bottom: 100px; /* clear fixed controls bar */
+            }
+
+            /* Controls pill: wrap into 2 rows, full width */
+            #controlsSection {
+                bottom: 12px;
+                left: 8px;
+                right: 8px;
+                transform: none;
+                border-radius: 20px;
+                padding: 10px 12px;
+                width: auto;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 8px;
+            }
+
+            #controlsSection .button-group {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+                width: 100%;
+            }
+
+            #controlsSection button {
+                padding: 10px 8px;
+                font-size: 0.78em;
+                border-radius: 12px;
+                white-space: nowrap;
+            }
+
+            #participantBadge {
+                width: 100%;
+                justify-content: center;
+                margin-right: 0 !important;
+                margin-bottom: 4px;
+            }
+
+            .console {
+                height: 120px;
+                font-size: 0.78em;
+                margin-bottom: 110px; /* clear fixed controls bar */
+            }
+
+            .video-label {
+                font-size: 0.75em;
+                padding: 4px 8px;
+                bottom: 8px;
+                left: 8px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            h1 {
+                font-size: 1.15em;
+            }
+
+            #controlsSection .button-group {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            #controlsSection button {
+                font-size: 0.72em;
+                padding: 9px 6px;
+            }
+        }
         
         .button-group {
             display: grid;
@@ -497,8 +608,10 @@
 <body>
     <div class="container">
         <div class="header-section">
-            <img src="/assets/logo.png" alt="WTFONE Logo">
-            <h1>WTFONE Video Chat</h1>
+            <a href="/" onclick="goHome(event)" style="display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit; cursor:pointer;">
+                <img src="/assets/logo.png" alt="WTFONE Logo">
+                <h1>WTFONE Video Chat</h1>
+            </a>
         </div>
         
         <div class="controls">
@@ -516,7 +629,12 @@
                 
                 <div class="form-group" id="roomIdGroup">
                     <label for="roomId"><i class="fa-solid fa-hashtag"></i> Room ID</label>
-                    <input type="text" id="roomId" placeholder="Enter Room ID">
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="roomId" placeholder="Enter Room ID" style="flex: 1;">
+                        <button type="button" id="copyUrlBtn" onclick="copyRoomLink(this)" style="width: auto; padding: 12px 16px; background: rgba(255,255,255,0.08); box-shadow: none;" title="Copy Room Link">
+                            <i class="fa-solid fa-copy"></i>
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="form-group">
@@ -542,6 +660,7 @@
                     <span id="participantCount">1</span> Active
                 </span>
                 <div class="button-group">
+                    <button id="copyLinkBtn" onclick="copyRoomLink(this)"><i class="fa-solid fa-copy"></i> Copy Link</button>
                     <button id="muteAudioBtn" onclick="toggleAudio()" disabled><i class="fa-solid fa-microphone"></i> Audio</button>
                     <button id="muteVideoBtn" onclick="toggleVideo()" disabled><i class="fa-solid fa-video"></i> Video</button>
                     <button id="recordBtn" onclick="toggleRecording()" disabled><i class="fa-solid fa-circle"></i> Record</button>
@@ -581,12 +700,6 @@
             const passwordInput = document.getElementById('password');
             const authActionBtn = document.getElementById('authActionBtn');
             
-            // Remove copy button container if it exists
-            const copyContainer = document.getElementById('copy-url-container');
-            if (copyContainer) {
-                copyContainer.remove();
-            }
-            
             // Clear inputs and status
             passwordInput.value = '';
             showStatus('', 'info');
@@ -617,6 +730,37 @@
                 handleJoin();
             } else {
                 handleCreate();
+            }
+        }
+        
+        function setAuthLoading(isLoading) {
+            document.getElementById('password').disabled = isLoading;
+            document.getElementById('roomId').disabled = isLoading;
+            document.getElementById('authActionBtn').disabled = isLoading;
+            document.getElementById('tabJoin').disabled = isLoading;
+            document.getElementById('tabCreate').disabled = isLoading;
+            document.getElementById('joinBtn').disabled = isLoading;
+            document.getElementById('createBtn').disabled = isLoading;
+            
+            const btn = document.getElementById('authActionBtn');
+            if (isLoading) {
+                btn.dataset.originalHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+            } else if (btn.dataset.originalHtml) {
+                btn.innerHTML = btn.dataset.originalHtml;
+            }
+        }
+        
+        function goHome(e) {
+            e.preventDefault();
+            if (ws) {
+                leaveRoom();
+            } else {
+                window.history.pushState({}, '', '/');
+                switchTab('join');
+                document.getElementById('roomId').value = '';
+                document.getElementById('password').value = '';
+                showStatus('', 'info');
             }
         }
         
@@ -666,6 +810,8 @@
                 return;
             }
             
+            setAuthLoading(true);
+            
             try {
                 showStatus('Creating room...', 'info');
                 const response = await fetch('/api/rooms', {
@@ -683,68 +829,44 @@
                 roomId = data.room_id;
                 document.getElementById('roomId').value = roomId;
                 
-                // Build shareable URL with actual IP address
-                // Get local IP from server
-                const ipResponse = await fetch('/api/local-ip');
-                const ipData = await ipResponse.json();
-                const localIp = ipData.ip || window.location.hostname;
-                const port = window.location.port ? `:${window.location.port}` : ':8443';
+                // Build shareable URL
+                const port = window.location.port ? `:${window.location.port}` : '';
                 const protocol = window.location.protocol;
-                const shareUrl = `${protocol}//${localIp}${port}/room/${roomId}`;
+                const shareUrl = `${protocol}//${window.location.hostname}${port}/room/${roomId}`;
                 
                 showStatus(`Room created: ${roomId}`, 'success');
                 log(`Room created: ${roomId}`);
-                log(`Share URL: ${shareUrl}`);
                 
-                // Show copy button
-                showCopyButton(shareUrl);
+                // Navigate to the room page and switch to join tab
+                window.history.pushState({}, '', `/room/${roomId}`);
+                switchTab('join');
+                document.getElementById('roomId').value = roomId;
+                
+                setAuthLoading(false);
             } catch (error) {
                 showStatus(`Error: ${error.message}`, 'error');
                 log(`Error creating room: ${error.message}`, 'error');
+                setAuthLoading(false);
             }
         }
         
-        function showCopyButton(url) {
-            let copyContainer = document.getElementById('copy-url-container');
-            
-            if (!copyContainer) {
-                copyContainer = document.createElement('div');
-                copyContainer.id = 'copy-url-container';
-                copyContainer.style.cssText = 'margin-top: 15px; display: flex; gap: 10px; width: 100%;';
-                
-                const urlDisplay = document.createElement('input');
-                urlDisplay.id = 'share-url-input';
-                urlDisplay.type = 'text';
-                urlDisplay.readOnly = true;
-                urlDisplay.style.cssText = 'flex: 1; padding: 12px 16px; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; background: rgba(17, 18, 25, 0.8); color: #fff; font-size: 0.9em;';
-                
-                const copyBtn = document.createElement('button');
-                copyBtn.id = 'copy-url-btn';
-                copyBtn.className = 'btn-create-active';
-                copyBtn.innerHTML = '<i class="fa-solid fa-copy"></i> Copy Link';
-                copyBtn.style.cssText = 'padding: 12px 20px; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-family: inherit; transition: all 0.25s ease; width: auto;';
-                copyBtn.onclick = () => copyToClipboard(url, copyBtn);
-                
-                copyContainer.appendChild(urlDisplay);
-                copyContainer.appendChild(copyBtn);
-                
-                const authSection = document.getElementById('authSection');
-                authSection.appendChild(copyContainer);
+        function copyRoomLink(btn) {
+            const roomIdVal = document.getElementById('roomId').value || roomId;
+            if (!roomIdVal) {
+                showStatus('No room ID available to copy', 'error');
+                return;
             }
+            const port = window.location.port ? `:${window.location.port}` : '';
+            const shareUrl = `${window.location.protocol}//${window.location.hostname}${port}/room/${roomIdVal}`;
             
-            document.getElementById('share-url-input').value = url;
-        }
-        
-        function copyToClipboard(text, button) {
-            navigator.clipboard.writeText(text).then(() => {
-                button.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
-                button.style.background = 'linear-gradient(135deg, #10b981, #047857)';
-                
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+                btn.style.color = '#10b981';
                 setTimeout(() => {
-                    button.innerHTML = '<i class="fa-solid fa-copy"></i> Copy Link';
-                    button.style.background = '';
+                    btn.innerHTML = originalHtml;
+                    btn.style.color = '';
                 }, 2000);
-                
                 log('Room link copied to clipboard');
             }).catch(err => {
                 log(`Failed to copy: ${err.message}`, 'error');
@@ -761,6 +883,7 @@
             }
             
             hasSignalingError = false;
+            setAuthLoading(true);
             
             try {
                 showStatus('Requesting camera/mic...', 'info');
@@ -841,10 +964,12 @@
                     log('WebSocket closed');
                     ws = null;
                     peerId = null;
+                    setAuthLoading(false);
                 };
             } catch (error) {
                 showStatus(`Error: ${error.message}`, 'error');
                 log(`Error: ${error.message}`, 'error');
+                setAuthLoading(false);
             }
         }
         
@@ -984,8 +1109,14 @@
             // Handle remote stream
             peerConnection.ontrack = (event) => {
                 log(`Received track from ${remotePeerId}`);
-                remoteStreams.set(remotePeerId, event.streams[0]);
-                displayRemoteVideo(remotePeerId, event.streams[0]);
+                let stream = event.streams && event.streams[0];
+                if (!stream) {
+                    // Some browsers send tracks without a stream — build one
+                    stream = remoteStreams.get(remotePeerId) || new MediaStream();
+                    stream.addTrack(event.track);
+                }
+                remoteStreams.set(remotePeerId, stream);
+                displayRemoteVideo(remotePeerId, stream);
             };
             
             // Handle connection state changes
@@ -1217,6 +1348,11 @@
             document.getElementById('authSection').style.display = 'block';
             document.getElementById('controlsSection').style.display = 'none';
             
+            // If URL is currently a room URL, push state back to root
+            if (window.location.pathname.startsWith('/room/')) {
+                window.history.pushState({}, '', '/');
+            }
+            
             showStatus('Left room', 'info');
             log('Left room');
         }
@@ -1251,6 +1387,21 @@
         
         // Initialize from URL if room ID in path
         initializeFromUrl();
+        
+        // Handle browser back button
+        window.addEventListener('popstate', () => {
+            if (window.location.pathname === '/' && ws) {
+                log('User navigated back, leaving room automatically');
+                leaveRoom();
+            }
+        });
+        
+        // Ensure proper cleanup when tab is closed
+        window.addEventListener('beforeunload', () => {
+            if (ws) {
+                ws.close();
+            }
+        });
         
         log('WTFONE ready');
     </script>

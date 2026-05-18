@@ -34,6 +34,13 @@ powershell -ExecutionPolicy Bypass -File .\run_tests.ps1
 npm test && npx playwright show-report
 ```
 
+## Scripts
+
+```
+cargo run --bin cleanup_rooms
+cargo run --bin stats_rooms
+```
+
 ## Architecture
 
 Browser (WebRTC) ←→ WebSocket ←→ Axum Server (signaling relay)
