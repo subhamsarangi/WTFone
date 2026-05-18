@@ -212,9 +212,37 @@ async fn handle_socket(
         match msg {
             axum::extract::ws::Message::Text(text) => {
                 if let Ok(client_msg) = serde_json::from_str::<ClientMessage>(&text) {
-                    // Handle offer/answer/ice messages (Phase 4)
-                    // For now, just log
-                    tracing::debug!("Received message from peer {}: {:?}", peer_id, client_msg);
+                    match client_msg {
+                        ClientMessage::Offer { to, sdp } => {
+                            // Find target peer
+                            if let Some(target_peer) = crate::rooms::get_peer_from_room(&rooms, room_id, Uuid::parse_str(&to).unwrap_or_default()) {
+                                let msg = ServerMessage::Offer {
+                                    from: peer_id.to_string(),
+                                    sdp,
+                                };
+                                let _ = target_peer.tx.send(msg);
+                                tracing::debug!("Relayed offer from {} to {}", peer_id, to);
+                            } else {
+                                tracing::warn!("Target peer {} not found in room {}", to, room_id);
+                            }
+                        }
+                        ClientMessage::Answer { to, sdp } => {
+                            // Find target peer
+                            if let Some(target_peer) = crate::rooms::get_peer_from_room(&rooms, room_id, Uuid::parse_str(&to).unwrap_or_default()) {
+                                let msg = ServerMessage::Answer {
+                                    from: peer_id.to_string(),
+                                    sdp,
+                                };
+                                let _ = target_peer.tx.send(msg);
+                                tracing::debug!("Relayed answer from {} to {}", peer_id, to);
+                            } else {
+                                tracing::warn!("Target peer {} not found in room {}", to, room_id);
+                            }
+                        }
+                        _ => {
+                            tracing::debug!("Received message from peer {}: {:?}", peer_id, client_msg);
+                        }
+                    }
                 }
             }
             axum::extract::ws::Message::Close(_) => {
