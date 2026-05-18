@@ -1,13 +1,13 @@
 # Create room
 $body = @{ password = "test123" } | ConvertTo-Json
-$response = Invoke-WebRequest -Method POST -Uri http://localhost:3000/api/rooms -ContentType "application/json" -Body $body
+$response = Invoke-WebRequest -Method POST -Uri http://localhost:8443/api/rooms -ContentType "application/json" -Body $body
 $roomId = ($response.Content | ConvertFrom-Json).room_id
 Write-Host "Created room: $roomId"
 
 # Connect peer 1
 $ws1 = New-Object System.Net.WebSockets.ClientWebSocket
 $cts1 = New-Object System.Threading.CancellationTokenSource
-$uri = "ws://localhost:3000/api/rooms/$roomId/ws"
+$uri = "ws://localhost:8443/api/rooms/$roomId/ws"
 $ws1.ConnectAsync($uri, $cts1.Token).Wait()
 Write-Host "Peer 1 connected"
 
@@ -52,3 +52,4 @@ Write-Host "Peer 1 received notification: $msg"
 Write-Host "Test complete!"
 $ws1.Dispose()
 $ws2.Dispose()
+exit 0

@@ -2,7 +2,7 @@
 # Validates HTML serves, WebSocket connects, and signaling works
 # Note: Full WebRTC video test requires browser automation (Playwright/Puppeteer)
 
-$baseUrl = "http://localhost:3000"
+$baseUrl = "http://localhost:8443"
 $password = "test123"
 
 Write-Host "=== Phase 5: WebRTC Client Implementation Tests ===" -ForegroundColor Cyan
@@ -73,7 +73,7 @@ Write-Host "  Room created: $roomId" -ForegroundColor Cyan
 
 # Connect peer A
 $peerAWs = New-Object System.Net.WebSockets.ClientWebSocket
-$peerAUri = New-Object System.Uri("ws://localhost:3000/api/rooms/$roomId/ws")
+$peerAUri = New-Object System.Uri("ws://localhost:8443/api/rooms/$roomId/ws")
 $peerAWs.ConnectAsync($peerAUri, [System.Threading.CancellationToken]::None).Wait()
 Write-Host "  Peer A connected" -ForegroundColor Cyan
 
@@ -186,3 +186,4 @@ $peerBWs.Dispose()
 Write-Host "`n=== Phase 5 Tests Complete ===" -ForegroundColor Green
 Write-Host "✓ All tests passed!" -ForegroundColor Green
 Write-Host "`nNote: Full WebRTC video/audio testing requires browser automation (Playwright/Puppeteer)" -ForegroundColor Yellow
+exit 0

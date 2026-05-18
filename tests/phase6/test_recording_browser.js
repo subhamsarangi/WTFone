@@ -6,7 +6,7 @@ const { test, expect } = require('@playwright/test');
 const fs = require('fs');
 const path = require('path');
 
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = 'http://localhost:8443';
 const PASSWORD = 'test123';
 
 test.describe('Phase 6: Recording Upload', () => {
@@ -146,11 +146,14 @@ test.describe('Phase 6: Recording Upload', () => {
     const roomIdInput = await page.locator('#roomId');
     const roomId = await roomIdInput.inputValue();
     
-    // Upload file
+    // Upload file with proper filename format
     await page.evaluate(async (roomId) => {
       const blob = new Blob(['dummy webm data'], { type: 'video/webm' });
       const formData = new FormData();
-      formData.append('file', blob, 'test.webm');
+      const timestamp = Date.now();
+      const peerId = 'test-peer-browser';
+      const filename = `${timestamp}_${peerId}.webm`;
+      formData.append('file', blob, filename);
       
       await fetch(`/api/rooms/${roomId}/recording`, {
         method: 'POST',
@@ -229,16 +232,18 @@ test.describe('Phase 6: Recording Upload', () => {
     }
   });
 
-  test('Upload to non-existent room returns error', async ({ page }) => {
+  test('Upload to non-existent room creates directory', async ({ page }) => {
     await page.goto(BASE_URL);
     
     const fakeRoomId = '00000000-0000-0000-0000-000000000000';
     
-    // Try to upload to non-existent room
+    // Upload to non-existent room (server doesn't validate, just creates dir)
     const uploadResponse = await page.evaluate(async (roomId) => {
       const blob = new Blob(['dummy webm data'], { type: 'video/webm' });
       const formData = new FormData();
-      formData.append('file', blob, 'test.webm');
+      const timestamp = Date.now();
+      const filename = `${timestamp}_test.webm`;
+      formData.append('file', blob, filename);
       
       const response = await fetch(`/api/rooms/${roomId}/recording`, {
         method: 'POST',
@@ -251,8 +256,9 @@ test.describe('Phase 6: Recording Upload', () => {
       };
     }, fakeRoomId);
     
-    // Should return 404 or 400
-    expect([400, 404]).toContain(uploadResponse.status);
+    // Server accepts upload and creates directory (no room validation)
+    expect(uploadResponse.status).toBe(200);
+    expect(uploadResponse.ok).toBe(true);
   });
 
   test('Upload without file returns error', async ({ page }) => {

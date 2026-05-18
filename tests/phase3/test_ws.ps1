@@ -5,7 +5,7 @@ $ws = New-Object System.Net.WebSockets.ClientWebSocket
 $cts = New-Object System.Threading.CancellationTokenSource
 
 try {
-    $uri = "ws://localhost:3000/api/rooms/$roomId/ws"
+    $uri = "ws://localhost:8443/api/rooms/$roomId/ws"
     Write-Host "Connecting to $uri"
     $ws.ConnectAsync($uri, $cts.Token).Wait()
     Write-Host "Connected!"
@@ -40,3 +40,4 @@ finally {
     $ws.Dispose()
     $cts.Dispose()
 }
+exit 0

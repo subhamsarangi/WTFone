@@ -266,6 +266,18 @@
             { urls: 'stun:stun1.l.google.com:19302' }
         ];
         
+        // Check if room ID in URL path
+        function initializeFromUrl() {
+            const pathMatch = window.location.pathname.match(/^\/room\/([a-f0-9\-]+)$/i);
+            if (pathMatch) {
+                roomId = pathMatch[1];
+                document.getElementById('roomId').value = roomId;
+                log(`Room ID from URL: ${roomId}`);
+                return true;
+            }
+            return false;
+        }
+        
         function log(message, type = 'info') {
             const console = document.getElementById('console');
             const line = document.createElement('div');
@@ -303,13 +315,75 @@
                 }
                 
                 const data = await response.json();
-                document.getElementById('roomId').value = data.room_id;
-                showStatus(`Room created: ${data.room_id}`, 'success');
-                log(`Room created: ${data.room_id}`);
+                roomId = data.room_id;
+                document.getElementById('roomId').value = roomId;
+                
+                // Build shareable URL with actual IP address
+                // Get local IP from server
+                const ipResponse = await fetch('/api/local-ip');
+                const ipData = await ipResponse.json();
+                const localIp = ipData.ip || window.location.hostname;
+                const port = window.location.port ? `:${window.location.port}` : ':8443';
+                const protocol = window.location.protocol;
+                const shareUrl = `${protocol}//${localIp}${port}/room/${roomId}`;
+                
+                showStatus(`Room created: ${roomId}`, 'success');
+                log(`Room created: ${roomId}`);
+                log(`Share URL: ${shareUrl}`);
+                
+                // Show copy button
+                showCopyButton(shareUrl);
             } catch (error) {
                 showStatus(`Error: ${error.message}`, 'error');
                 log(`Error creating room: ${error.message}`, 'error');
             }
+        }
+        
+        function showCopyButton(url) {
+            let copyContainer = document.getElementById('copy-url-container');
+            
+            if (!copyContainer) {
+                copyContainer = document.createElement('div');
+                copyContainer.id = 'copy-url-container';
+                copyContainer.style.cssText = 'margin-top: 10px; display: flex; gap: 10px;';
+                
+                const urlDisplay = document.createElement('input');
+                urlDisplay.id = 'share-url-input';
+                urlDisplay.type = 'text';
+                urlDisplay.readOnly = true;
+                urlDisplay.style.cssText = 'flex: 1; padding: 10px; border: 1px solid #444; border-radius: 4px; background: #1a1a1a; color: #fff; font-size: 0.9em;';
+                
+                const copyBtn = document.createElement('button');
+                copyBtn.id = 'copy-url-btn';
+                copyBtn.textContent = 'Copy Link';
+                copyBtn.style.cssText = 'padding: 10px 20px; background: #0066cc; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;';
+                copyBtn.onclick = () => copyToClipboard(url, copyBtn);
+                
+                copyContainer.appendChild(urlDisplay);
+                copyContainer.appendChild(copyBtn);
+                
+                const joinSection = document.querySelector('.join-section');
+                joinSection.appendChild(copyContainer);
+            }
+            
+            document.getElementById('share-url-input').value = url;
+        }
+        
+        function copyToClipboard(text, button) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.style.background = '#00aa00';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '#0066cc';
+                }, 2000);
+                
+                log('Room link copied to clipboard');
+            }).catch(err => {
+                log(`Failed to copy: ${err.message}`, 'error');
+            });
         }
         
         async function handleJoin() {
@@ -629,7 +703,9 @@
         async function uploadRecording(blob) {
             try {
                 const formData = new FormData();
-                formData.append('file', blob, `recording_${Date.now()}.webm`);
+                const timestamp = Date.now();
+                const filename = `${timestamp}_${peerId}.webm`;
+                formData.append('file', blob, filename);
                 
                 const response = await fetch(`/api/rooms/${roomId}/recording`, {
                     method: 'POST',
@@ -674,6 +750,9 @@
                 handleJoin();
             }
         });
+        
+        // Initialize from URL if room ID in path
+        initializeFromUrl();
         
         log('WTFONE ready');
     </script>

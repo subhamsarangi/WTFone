@@ -1,7 +1,7 @@
 # Test ICE candidate relay between two peers
 # Start server first: cargo run
 
-$baseUrl = "http://localhost:3000"
+$baseUrl = "http://localhost:8443"
 $password = "test123"
 
 # Step 1: Create room
@@ -18,7 +18,7 @@ Write-Host "Room created: $roomId" -ForegroundColor Green
 # Step 2: Connect peer A
 Write-Host "`nConnecting peer A..." -ForegroundColor Cyan
 $peerAWs = New-Object System.Net.WebSockets.ClientWebSocket
-$peerAUri = New-Object System.Uri("ws://localhost:3000/api/rooms/$roomId/ws")
+$peerAUri = New-Object System.Uri("ws://localhost:8443/api/rooms/$roomId/ws")
 $peerAWs.ConnectAsync($peerAUri, [System.Threading.CancellationToken]::None).Wait()
 Write-Host "Peer A connected" -ForegroundColor Green
 
@@ -91,3 +91,4 @@ if ($iceObj.type -eq "ice" -and $iceObj.from -eq $peerAId) {
 $peerAWs.Dispose()
 $peerBWs.Dispose()
 Write-Host "`n✓ ICE relay test passed!" -ForegroundColor Green
+exit 0

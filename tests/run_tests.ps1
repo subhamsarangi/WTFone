@@ -21,8 +21,13 @@ function Run-Test {
     
     try {
         & $TestPath
-        $status = "PASS"
-        $color = "Green"
+        if ($LASTEXITCODE -ne 0) {
+            $status = "FAIL"
+            $color = "Red"
+        } else {
+            $status = "PASS"
+            $color = "Green"
+        }
     } catch {
         Write-Host "Error: $_" -ForegroundColor Red
         $status = "FAIL"
