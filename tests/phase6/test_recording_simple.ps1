@@ -1,7 +1,8 @@
 # Simple recording upload test
+[System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
 Write-Host "=== Phase 6: Recording Upload Test ===" -ForegroundColor Cyan
 
-$baseUrl = "http://localhost:8443"
+$baseUrl = "https://localhost:8443"
 
 # Test 1: Create room
 Write-Host "`nTest 1: Create room..." -ForegroundColor Yellow

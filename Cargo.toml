@@ -16,3 +16,5 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 futures = "0.3"
 chrono = "0.4"
+axum-server = { version = "0.7", features = ["tls-rustls"] }
+rustls = "0.23"

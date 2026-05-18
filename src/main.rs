@@ -14,6 +14,7 @@ use tower_http::trace::TraceLayer;
 use tower_http::services::ServeDir;
 use tracing_subscriber;
 use std::path::PathBuf;
+use axum_server::tls_rustls::RustlsConfig;
 
 mod rooms;
 mod signaling;
@@ -57,14 +58,19 @@ async fn main() {
         .unwrap_or(8443);
     
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    tracing::info!("Server listening on http://{}", addr);
-    tracing::info!("Access from other devices: http://<your-ip>:{}", port);
+    
+    let config = RustlsConfig::from_pem_file(
+        "localhost+3.pem",
+        "localhost+3-key.pem",
+    )
+    .await
+    .expect("Failed to load TLS config");
 
-    let listener = tokio::net::TcpListener::bind(addr)
-        .await
-        .expect("Failed to bind");
+    tracing::info!("Server listening on https://{}", addr);
+    tracing::info!("Access from other devices: https://<your-ip>:{}", port);
 
-    axum::serve(listener, app)
+    axum_server::bind_rustls(addr, config)
+        .serve(app.into_make_service())
         .await
         .expect("Server error");
 }
