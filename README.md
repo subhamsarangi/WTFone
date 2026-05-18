@@ -1,76 +1,67 @@
 # WTFONE
 
-Peer-to-peer video chat. WebRTC + Rust backend.
+Peer-to-peer video chat. Rust backend + WebRTC client.
 
-## Build
+## Quick Start
 
 ```bash
 cargo build
-```
-
-## Run
-
-```bash
 cargo run
+# http://localhost:3000
 ```
 
-Server: `http://localhost:3000`
+## HTTPS (Local Dev)
 
+WebRTC requires HTTPS for camera/mic access (except localhost). For HTTPS testing:
 
-## TEST
-```
-cd tests
-./run_tests.ps1
-```
-
-```
-npm test
-npx playwright show-report
-```
-## API
-
-**Create room:**
 ```bash
-POST /api/rooms
-Content-Type: application/json
-
-{"password": "secret"}
+mkcert localhost 127.0.0.1 ::1
+# Creates: localhost+2.pem, localhost+2-key.pem
 ```
 
-Response: `{"room_id": "uuid"}`
+For production: use reverse proxy (nginx/cloudflared) or add tokio-rustls to main.rs
 
-**Join room:**
-```
-WebSocket: ws://localhost:3000/api/rooms/{room_id}/ws
+## Testing
 
-Join message:
-{"type": "join", "room_id": "uuid", "password": "secret"}
-
-Server responds:
-{"type": "joined", "peer_id": "uuid"}
+```bash
+cargo test
+cd tests && ./run_tests.ps1
+npm test && npx playwright show-report
 ```
 
-## Messages
+## Architecture
 
-**Client → Server:**
-- `join`: room_id, password
-- `offer`: to (peer_id), sdp
-- `answer`: to (peer_id), sdp
-- `ice`: to (peer_id), candidate
+Browser (WebRTC) ←→ WebSocket ←→ Axum Server (signaling relay)
 
-**Server → Client:**
-- `joined`: peer_id
-- `peer_joined`: peer_id
-- `peer_left`: peer_id
-- `offer`: from (peer_id), sdp
-- `answer`: from (peer_id), sdp
-- `ice`: from (peer_id), candidate
-- `error`: message
+## Key Files
 
-## Status
+- `src/main.rs` - Server, routes
+- `src/rooms.rs` - Room management
+- `src/signaling.rs` - WebSocket handler
+- `static/index.html` - Client UI + WebRTC
+- `API.md` - Endpoint docs
 
-- Phase 0-1: Server + static files ✅
-- Phase 2: Room creation API ✅
-- Phase 3: WebSocket join flow ✅
-- Phase 4-10: In progress
-```
+## Deployment
+
+Options: nginx, cloudflared, tokio-rustls.
+
+## Progress
+
+### Completed ✅
+
+- Phase 0: Bootstrap
+- Phase 0.5: Dev tooling (rust-analyzer, mkcert)
+- Phase 1: Server + static files
+- Phase 2: Room creation API
+- Phase 3: WebSocket join flow
+- Phase 4: WebRTC signaling relay
+- Phase 5: WebRTC client (video, audio, recording UI)
+- Phase 5.5: Branding (favicon, logo, meta tags)
+
+### In Progress
+
+- Phase 6: Recording upload
+- Phase 7: UI polish
+- Phase 8: Error handling
+- Phase 9: Production readiness
+- Phase 10: Future enhancements (OAuth, TURN, chat, screen share, etc.)
