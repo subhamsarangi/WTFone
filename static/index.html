@@ -496,6 +496,10 @@
                 margin-bottom: 100px; /* clear fixed controls bar */
             }
 
+            .video-container {
+                aspect-ratio: 9 / 16;
+            }
+
             /* Controls pill: wrap into 2 rows, full width */
             #controlsSection {
                 bottom: 12px;
@@ -1144,7 +1148,7 @@
                     ws.send(JSON.stringify({
                         type: 'ice',
                         to: remotePeerId,
-                        candidate: event.candidate
+                        candidate: event.candidate.toJSON()
                     }));
                 }
             };
@@ -1176,7 +1180,7 @@
                 ws.send(JSON.stringify({
                     type: 'offer',
                     to: remotePeerId,
-                    sdp: offer
+                    sdp: offer.sdp
                 }));
                 log(`Sent offer to ${remotePeerId}`);
             }
@@ -1196,7 +1200,7 @@
             ws.send(JSON.stringify({
                 type: 'answer',
                 to: remotePeerId,
-                sdp: answer
+                sdp: answer.sdp
             }));
             log(`Sent answer to ${remotePeerId}`);
         }
